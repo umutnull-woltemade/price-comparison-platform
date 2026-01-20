@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  EARNED
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+  REFUNDED
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+// Cashback Transactions
+model CashbackTransaction {
+  id              String            @id @default(cuid())
+  userId          String
+  accountId       String
+  type            TransactionType
+  amount          Decimal           @db.Decimal(10, 2)
+  currency        String            @default("TRY")
+  status          TransactionStatus @default(PENDING)
+
+  // Order/Purchase Details
+  orderId         String?
+  orderAmount     Decimal?          @db.Decimal(10, 2)
+  storeId         String?
+  storeName       String?
+  productId       String?
+  productName     String?
+
+  // Commission Details
+  commissionRate  Decimal?          @db.Decimal(5, 2)
+  affiliateId     String?
+
+  // Metadata
+  description     String?
+  metadata        Json?
+
+  // Approval
+  approvedAt      DateTime?
+  approvedBy      String?
+  rejectedAt      DateTime?
+  rejectionReason String?
+
+  // Timestamps
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Withdrawal Requests
+model WithdrawalRequest {
+  id              String           @id @default(cuid())
+  userId          String
+  accountId       String
+  amount          Decimal          @db.Decimal(10, 2)
+  fee             Decimal          @default(0) @db.Decimal(10, 2)
+  netAmount       Decimal          @db.Decimal(10, 2)
+  currency        String           @default("TRY")
+  status          WithdrawalStatus @default(PENDING)
+
+  // Payment Details
+  paymentMethod   String
+  accountNumber   String?
+  iban            String?
+  bankName        String?
+  accountHolder   String?
+
+  // Processing
+  processedAt     DateTime?
+  processedBy     String?
+  completedAt     DateTime?
+  transactionRef  String?
+
+  // Rejection
+  rejectedAt      DateTime?
+  rejectedBy      String?
+  rejectionReason String?
+
+  // Metadata
+  notes           String?
+  metadata        Json?
+
+  // Timestamps
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Affiliate Clicks
+model AffiliateClick {
+  id          String   @id @default(cuid())
+  userId      String?
+  productId   String
+  storeId     String
+  affiliateId String
+  clickId     String   @unique
+  ipAddress   String?
+  userAgent   String?
+  referrer    String?
+  converted   Boolean  @default(false)
+  orderId     String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
+  @@index([affiliateId])
+  @@index([converted])
+  @@index([createdAt])
+}

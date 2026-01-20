@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Product Categories
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  icon        String?
+  image       String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+  isActive    Boolean    @default(true)
+  order       Int        @default(0)
+  seoTitle    String?
+  seoDesc     String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+// Brands
+model Brand {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  logo        String?
+  description String?
+  website     String?
+  products    Product[]
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([slug])
+}
+
+// Stores/Retailers
+model Store {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  slug          String         @unique
+  logo          String?
+  website       String
+  description   String?
+  cashbackRate  Decimal        @default(0) @db.Decimal(5, 2)
+  isActive      Boolean        @default(true)
+  isFeatured    Boolean        @default(false)
+  trustScore    Decimal?       @db.Decimal(3, 2)
+  shippingInfo  String?
+  returnPolicy  String?
+  paymentMethods String[]
+  products      Product[]
+  priceHistories PriceHistory[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([slug])
+  @@index([isActive, isFeatured])
+}
+
+// Products
+model Product {
+  id              String          @id @default(cuid())
+  title           String
+  slug            String          @unique
+  description     String?
+  shortDesc       String?
+  sku             String?
+  barcode         String?
+  images          String[]
+  thumbnail       String?
+  categoryId      String
+  category        Category        @relation(fields: [categoryId], references: [id])
+  brandId         String?
+  brand           Brand?          @relation(fields: [brandId], references: [id])
+  storeId         String
+  store           Store           @relation(fields: [storeId], references: [id])
+
+  // Pricing
+  currentPrice    Decimal         @db.Decimal(10, 2)
+  originalPrice   Decimal?        @db.Decimal(10, 2)
+  currency        String          @default("TRY")
+  discount        Decimal?        @db.Decimal(5, 2)
+
+  // Stock & Availability
+  inStock         Boolean         @default(true)
+  stockCount      Int?
+
+  // Product Details
+  specifications  Json?
+  features        String[]
+  tags            String[]
+
+  // SEO
+  seoTitle        String?
+  seoDesc         String?
+  seoKeywords     String[]
+
+  // Stats
+  viewCount       Int             @default(0)
+  clickCount      Int             @default(0)
+  favoriteCount   Int             @default(0)
+
+  // Ratings
+  rating          Decimal?        @db.Decimal(3, 2)
+  reviewCount     Int             @default(0)
+
+  // Status
+  isActive        Boolean         @default(true)
+  isFeatured      Boolean         @default(false)
+
+  // External
+  sourceUrl       String
+  externalId      String?
+
+  // Relations
+  priceHistories  PriceHistory[]
+  reviews         Review[]
+
+  // Timestamps
+  lastCheckedAt   DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([storeId])
+  @@index([isActive, isFeatured])
+  @@index([currentPrice])
+  @@index([createdAt])
+}
+
+// Price History
+model PriceHistory {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id])
+  price      Decimal  @db.Decimal(10, 2)
+  discount   Decimal? @db.Decimal(5, 2)
+  inStock    Boolean  @default(true)
+  currency   String   @default("TRY")
+  createdAt  DateTime @default(now())
+
+  @@index([productId, createdAt])
+  @@index([storeId])
+  @@index([createdAt])
+}
+
+// Product Reviews
+model Review {
+  id          String   @id @default(cuid())
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId      String
+  rating      Int
+  title       String?
+  comment     String
+  pros        String[]
+  cons        String[]
+  images      String[]
+  isVerified  Boolean  @default(false)
+  helpfulCount Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@index([createdAt])
+}

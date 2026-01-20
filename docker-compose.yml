@@ -1,0 +1,245 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: price-platform-postgres
+    environment:
+      POSTGRES_USER: priceuser
+      POSTGRES_PASSWORD: pricepass
+      POSTGRES_DB: price_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U priceuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - price-platform
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: price-platform-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - price-platform
+
+  # MongoDB
+  mongodb:
+    image: mongo:7
+    container_name: price-platform-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: priceuser
+      MONGO_INITDB_ROOT_PASSWORD: pricepass
+      MONGO_INITDB_DATABASE: price_platform
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - price-platform
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: price-platform-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - price-platform
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./backend/services/api-gateway
+      dockerfile: Dockerfile
+    container_name: price-platform-api-gateway
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      USER_SERVICE_URL: http://user-service:3001
+      PRODUCT_SERVICE_URL: http://product-service:3002
+      CASHBACK_SERVICE_URL: http://cashback-service:3003
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: dev-secret-change-in-production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ./backend/services/api-gateway:/app
+      - /app/node_modules
+    networks:
+      - price-platform
+    restart: unless-stopped
+
+  # User Service
+  user-service:
+    build:
+      context: ./backend/services/user-service
+      dockerfile: Dockerfile
+    container_name: price-platform-user-service
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://priceuser:pricepass@postgres:5432/price_platform
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: dev-secret-change-in-production
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend/services/user-service:/app
+      - /app/node_modules
+    networks:
+      - price-platform
+    restart: unless-stopped
+
+  # Product Service
+  product-service:
+    build:
+      context: ./backend/services/product-service
+      dockerfile: Dockerfile
+    container_name: price-platform-product-service
+    environment:
+      NODE_ENV: development
+      PORT: 3002
+      DATABASE_URL: postgresql://priceuser:pricepass@postgres:5432/price_platform
+      MONGODB_URL: mongodb://priceuser:pricepass@mongodb:27017/price_platform?authSource=admin
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+      - mongodb
+      - elasticsearch
+      - redis
+    volumes:
+      - ./backend/services/product-service:/app
+      - /app/node_modules
+    networks:
+      - price-platform
+    restart: unless-stopped
+
+  # Cashback Service
+  cashback-service:
+    build:
+      context: ./backend/services/cashback-service
+      dockerfile: Dockerfile
+    container_name: price-platform-cashback-service
+    environment:
+      NODE_ENV: development
+      PORT: 3003
+      DATABASE_URL: postgresql://priceuser:pricepass@postgres:5432/price_platform
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3003:3003"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend/services/cashback-service:/app
+      - /app/node_modules
+    networks:
+      - price-platform
+    restart: unless-stopped
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./backend/services/notification-service
+      dockerfile: Dockerfile
+    container_name: price-platform-notification-service
+    environment:
+      NODE_ENV: development
+      PORT: 3006
+      DATABASE_URL: postgresql://priceuser:pricepass@postgres:5432/price_platform
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3006:3006"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend/services/notification-service:/app
+      - /app/node_modules
+    networks:
+      - price-platform
+    restart: unless-stopped
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: ./backend/services/analytics-service
+      dockerfile: Dockerfile
+    container_name: price-platform-analytics-service
+    environment:
+      NODE_ENV: development
+      PORT: 3007
+      DATABASE_URL: postgresql://priceuser:pricepass@postgres:5432/price_platform
+      MONGODB_URL: mongodb://priceuser:pricepass@mongodb:27017/price_platform?authSource=admin
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3007:3007"
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+    volumes:
+      - ./backend/services/analytics-service:/app
+      - /app/node_modules
+    networks:
+      - price-platform
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  mongodb_data:
+  elasticsearch_data:
+
+networks:
+  price-platform:
+    driver: bridge

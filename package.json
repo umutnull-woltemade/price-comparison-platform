@@ -1,0 +1,62 @@
+{
+  "name": "price-comparison-platform",
+  "version": "1.0.0",
+  "description": "Modern fiyat karşılaştırma ve cashback platformu",
+  "private": true,
+  "workspaces": [
+    "backend/services/*",
+    "backend/shared/*",
+    "frontend/web",
+    "browser-extension"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:gateway": "npm run dev --workspace=backend/services/api-gateway",
+    "dev:user": "npm run dev --workspace=backend/services/user-service",
+    "dev:product": "npm run dev --workspace=backend/services/product-service",
+    "dev:cashback": "npm run dev --workspace=backend/services/cashback-service",
+    "dev:notification": "npm run dev --workspace=backend/services/notification-service",
+    "dev:analytics": "npm run dev --workspace=backend/services/analytics-service",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "test:unit": "npm run test:unit --workspaces",
+    "test:integration": "npm run test:integration --workspaces",
+    "test:e2e": "npm run test:e2e --workspaces",
+    "test:coverage": "npm run test:coverage --workspaces",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:migrate": "npm run migrate --workspace=backend/shared/database",
+    "db:seed": "npm run seed --workspace=backend/shared/database",
+    "db:reset": "npm run reset --workspace=backend/shared/database",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md}": [
+      "prettier --write"
+    ]
+  }
+}
