@@ -1,42 +1,34 @@
-import { Navbar } from '@/components/layout/Navbar'
 import { Hero } from '@/components/home/Hero'
-import { SearchBar } from '@/components/search/SearchBar'
+import { CategoryBar } from '@/components/home/CategoryBar'
 import { FeaturedProducts } from '@/components/home/FeaturedProducts'
-import { PopularCategories } from '@/components/home/PopularCategories'
+import { DealsSection } from '@/components/home/DealsSection'
+import { BrandsSection } from '@/components/home/BrandsSection'
 import { HowItWorks } from '@/components/home/HowItWorks'
-import { Stats } from '@/components/home/Stats'
-import { Footer } from '@/components/layout/Footer'
+import { Newsletter } from '@/components/home/Newsletter'
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
-      <Navbar />
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section with Search */}
+      <Hero />
 
-      <main>
-        {/* Hero Section */}
-        <Hero />
+      {/* Category Bar */}
+      <CategoryBar />
 
-        {/* Search Bar */}
-        <section className="bg-white py-8 shadow-sm">
-          <div className="container mx-auto px-4">
-            <SearchBar />
-          </div>
-        </section>
+      {/* Featured Products */}
+      <FeaturedProducts />
 
-        {/* Stats */}
-        <Stats />
+      {/* Deals / Flash Sale */}
+      <DealsSection />
 
-        {/* Featured Products */}
-        <FeaturedProducts />
+      {/* Popular Brands */}
+      <BrandsSection />
 
-        {/* Popular Categories */}
-        <PopularCategories />
+      {/* How It Works */}
+      <HowItWorks />
 
-        {/* How It Works */}
-        <HowItWorks />
-      </main>
-
-      <Footer />
+      {/* Newsletter CTA */}
+      <Newsletter />
     </div>
   )
 }

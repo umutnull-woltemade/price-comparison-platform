@@ -1,65 +1,174 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, TrendingUp, Shield, Gift } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const slides = [
+  {
+    id: 1,
+    badge: 'EN IYI FIRSATLAR',
+    title: 'Elektronik Urunlerde',
+    highlight: '%40\'a Varan Indirim',
+    description: 'Binlerce urun, yuzlerce magaza. En iyi fiyati biz bulalim.',
+    cta: 'Firsatlari Gor',
+    ctaLink: '/deals',
+    bgColor: 'bg-secondary-900',
+  },
+  {
+    id: 2,
+    badge: 'CASHBACK FIRSATI',
+    title: 'Alisverislerinizden',
+    highlight: '%10 Para Iadesi',
+    description: 'Her alisveriste cashback kazanin. Biriktirin, cekin.',
+    cta: 'Nasil Calisir?',
+    ctaLink: '/cashback',
+    bgColor: 'bg-primary-600',
+  },
+];
 
 export function Hero() {
-  return (
-    <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 text-white overflow-hidden">
-      <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
-      <div className="container mx-auto px-4 py-20 md:py-28 relative">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-            En İyi Fiyatları Bulun,
-            <br />
-            <span className="text-secondary-200">Alışverişten Para Kazanın</span>
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-primary-100">
-            Türkiye'nin en kapsamlı fiyat karşılaştırma platformu. Binlerce ürünü karşılaştırın, en uygun fiyatı bulun ve cashback kazanın.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Link
-              href="/products"
-              className="bg-white text-primary-700 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-all flex items-center justify-center space-x-2 shadow-lg"
-            >
-              <span>Ürünleri Keşfet</span>
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link
-              href="/register"
-              className="bg-secondary-500 text-white px-8 py-4 rounded-lg font-semibold hover:bg-secondary-600 transition-all shadow-lg"
-            >
-              Ücretsiz Kayıt Ol
-            </Link>
-          </div>
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
-          {/* Features */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:bg-white/15 transition-all">
-              <TrendingUp className="w-10 h-10 mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold mb-2">Fiyat Takibi</h3>
-              <p className="text-primary-100 text-sm">
-                Fiyat düşüşlerini otomatik takip edin, uyarı alın
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+    }
+  };
+
+  const slide = slides[currentSlide];
+
+  return (
+    <section className="relative">
+      {/* Main Hero Slider */}
+      <div className={`${slide.bgColor} transition-colors duration-500`}>
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-8 items-center min-h-[400px] md:min-h-[480px] py-12">
+            {/* Content */}
+            <div className="text-white">
+              <span className="inline-block px-3 py-1 bg-primary-500 text-white text-xs font-semibold rounded mb-4">
+                {slide.badge}
+              </span>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">
+                {slide.title}
+              </h1>
+              <p className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-400 mb-4">
+                {slide.highlight}
               </p>
+              <p className="text-gray-300 text-lg mb-8 max-w-md">
+                {slide.description}
+              </p>
+              <Link
+                href={slide.ctaLink}
+                className="inline-flex items-center gap-2 bg-primary-500 text-white px-8 py-4 rounded font-semibold hover:bg-primary-600 transition-colors"
+              >
+                <span>{slide.cta}</span>
+                <ArrowRight className="w-5 h-5" />
+              </Link>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:bg-white/15 transition-all">
-              <Shield className="w-10 h-10 mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold mb-2">Güvenli Alışveriş</h3>
-              <p className="text-primary-100 text-sm">
-                Sadece güvenilir mağazalardan alışveriş yapın
-              </p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:bg-white/15 transition-all">
-              <Gift className="w-10 h-10 mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold mb-2">Cashback Kazan</h3>
-              <p className="text-primary-100 text-sm">
-                Her alışverişinizden %5'e kadar para iadesi
-              </p>
+
+            {/* Image Placeholder */}
+            <div className="hidden lg:flex justify-center">
+              <div className="relative w-full max-w-md h-80">
+                <div className="absolute inset-0 bg-white/10 rounded-2xl backdrop-blur-sm flex items-center justify-center">
+                  <div className="text-center text-white/60">
+                    <div className="w-24 h-24 mx-auto mb-4 bg-white/20 rounded-2xl flex items-center justify-center">
+                      <Search className="w-12 h-12" />
+                    </div>
+                    <p className="text-lg">Binlerce Urun</p>
+                    <p className="text-sm">Tek Platformda</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Slider Navigation */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
+          <button
+            onClick={prevSlide}
+            className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="flex gap-2">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  index === currentSlide ? 'bg-primary-500' : 'bg-white/30'
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={nextSlide}
+            className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent" />
+
+      {/* Search Bar - Floating */}
+      <div className="container mx-auto px-4">
+        <div className="relative -mt-8 z-10">
+          <form onSubmit={handleSearch} className="bg-white rounded-lg shadow-lg p-2">
+            <div className="flex items-center">
+              <div className="flex-1 flex items-center">
+                <Search className="w-6 h-6 text-gray-400 ml-4" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Urun, marka veya kategori ara..."
+                  className="flex-1 h-14 px-4 text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="h-14 px-8 bg-primary-500 text-white rounded font-semibold hover:bg-primary-600 transition-colors"
+              >
+                Ara
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="container mx-auto px-4 mt-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg p-4 text-center border border-gray-100">
+            <p className="text-2xl font-bold text-primary-500">50K+</p>
+            <p className="text-gray-500 text-sm">Urun</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 text-center border border-gray-100">
+            <p className="text-2xl font-bold text-primary-500">500+</p>
+            <p className="text-gray-500 text-sm">Magaza</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 text-center border border-gray-100">
+            <p className="text-2xl font-bold text-primary-500">%10</p>
+            <p className="text-gray-500 text-sm">Cashback</p>
+          </div>
+          <div className="bg-white rounded-lg p-4 text-center border border-gray-100">
+            <p className="text-2xl font-bold text-primary-500">100K+</p>
+            <p className="text-gray-500 text-sm">Kullanici</p>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
